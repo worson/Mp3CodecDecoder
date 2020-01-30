@@ -262,14 +262,10 @@ public class ChannelNativePlayer {
 
             AILog.d(TAG, String.format("TRACKS #: %d", extractor.getTrackCount()));
             MediaFormat trackFormat = extractor.getTrackFormat(0);
+            AILog.i(TAG, "realPlay: trackFormat "+trackFormat);
             String mime = trackFormat.getString(MediaFormat.KEY_MIME);
-            int bitrate = trackFormat.getInteger(MediaFormat.KEY_BIT_RATE);
-            AILog.d(TAG, String.format("MIME TYPE: %s", mime));
-            AILog.d(TAG, String.format("bitrate: %s", bitrate));
-            AILog.d(TAG, String.format("channel count : %s", trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)));
             extractor.selectTrack(0);
-
-            extractor.seekTo(100 * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+//            extractor.seekTo(100 * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
 
             int channelConfig = (trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1) ? AudioFormat.CHANNEL_CONFIGURATION_MONO
                 : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
@@ -390,6 +386,7 @@ public class ChannelNativePlayer {
 
                     if (chunk.length > 0) {
 //                                AILog.d(TAG, "writing chunk:" + chunk.length);
+                        //In streaming mode, the write will normally block until all the data has been enqueued
                         mAudioTrack.write(chunk, 0, chunk.length);
                     }
                     decoder.releaseOutputBuffer(outputBufferId, false /* render */);
