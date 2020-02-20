@@ -1,11 +1,11 @@
-package com.sen.audio.mp3codecdecoder.codec;
+package com.lib.audio.mp3.codec;
 
 /**
  * 说明:
  *
  * @author wangshengxing  01.30 2020
  */
-public interface CodecListener {
+public interface Mp3DecodeListener {
 
     void onStart(int simpleRate,int channel);
 

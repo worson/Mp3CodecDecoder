@@ -1,2 +1,2 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.langogo.audio.mp3" />
+  package="com.lib.audio.mp3" />

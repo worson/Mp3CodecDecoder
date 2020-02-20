@@ -1,64 +1,28 @@
-package com.sen.audio.mp3codecdecoder.codec;
+package com.lib.audio.mp3.codec.system;
 
 import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import com.sen.audio.mp3codecdecoder.utils.AILog;
+import android.util.Log;
+import com.lib.audio.mp3.codec.Mp3DecodeListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 说明:
  *
  * @author wangshengxing  01.30 2020
  */
-public class Mp3Decoder {
+public class Mp3SystemDecoder {
 
     private final static String TAG = "Mp3Decoder";
 
-    private CodecListener mCodecListener;
-    private AtomicBoolean mDecoding=new AtomicBoolean(false);
-    private String mFilePath;
-
-    public Mp3Decoder(String filePath) {
-        mFilePath = filePath;
-    }
-
-    public int start(){
-        if (mFilePath == null || mCodecListener==null) {
-            AILog.e(TAG, "start: paras is error");
-            return -1;
-        }
-        if (mDecoding.get()) {
-            AILog.i(TAG, "start: busy ....");
-            return -1;
-        }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mDecoding.set(true);
-                decodeFile(mFilePath,mCodecListener);
-                mDecoding.set(false);
-            }
-        }).start();
-
-        return 0;
-    }
-
-    public void stop(){
-        mDecoding.set(false);
-    }
-
-    public void setCodecListener(CodecListener codecListener) {
-        mCodecListener = codecListener;
-    }
 
     /**
      * 解码并播放音频
      */
-    private void decodeFile(final String filePath,final CodecListener callback) {
+    public static void decodeFile(final String filePath,final Mp3DecodeListener callback) {
         if (callback == null) {
             return;
         }
@@ -68,9 +32,9 @@ public class Mp3Decoder {
         try {
             extractor.setDataSource(filePath);
 
-            AILog.d(TAG, String.format("TRACKS #: %d", extractor.getTrackCount()));
+            Log.d(TAG, String.format("TRACKS #: %d", extractor.getTrackCount()));
             MediaFormat trackFormat = extractor.getTrackFormat(0);
-            AILog.i(TAG, "realPlay: trackFormat "+trackFormat);
+            Log.i(TAG, "realPlay: trackFormat "+trackFormat);
             String mime = trackFormat.getString(MediaFormat.KEY_MIME);
             extractor.selectTrack(0);
             int channelConfig = (trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1) ? AudioFormat.CHANNEL_CONFIGURATION_MONO
@@ -90,7 +54,8 @@ public class Mp3Decoder {
 
             callback.onStart(sampleRateInHz,trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
 
-            while (!sawInputEOS && !sawOutputEOS && mDecoding.get()) {
+            boolean decoding=true;
+            while (!sawInputEOS && !sawOutputEOS && decoding) {
                 // Returns the index of an input buffer to be filled with valid data
                 // 获取解码器可输入缓冲区的id号
                 int inputBufferId = decoder.dequeueInputBuffer(-1);
@@ -108,7 +73,7 @@ public class Mp3Decoder {
                     if (sampleSize < 0) {
                         sawInputEOS = true;
                         sampleSize = 0;
-                        AILog.d(TAG, "saw EOF in input");
+                        Log.d(TAG, "saw EOF in input");
                     } else {
                         //Returns the current sample's presentation time in microseconds.
                         //获取当前帧对应的时长
@@ -122,13 +87,13 @@ public class Mp3Decoder {
                         presentationTimeUs,
                         sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
                 } else if (inputBufferId == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                    AILog.w(TAG, "INFO_TRY_AGAIN_LATER");
+                    Log.w(TAG, "INFO_TRY_AGAIN_LATER");
 
                 } else if (inputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    AILog.w(TAG, "INFO_OUTPUT_FORMAT_CHANGED");
+                    Log.w(TAG, "INFO_OUTPUT_FORMAT_CHANGED");
                     trackFormat = decoder.getOutputFormat();
                 } else {
-                    AILog.w(TAG, "unknown error dequeueInputBuffer");
+                    Log.w(TAG, "unknown error dequeueInputBuffer");
                 }
 
                 // decode
@@ -157,7 +122,7 @@ public class Mp3Decoder {
                     decoder.releaseOutputBuffer(outputBufferId, false /* render */);
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         sawOutputEOS = true;
-                        AILog.d(TAG, "saw output EOS");
+                        Log.d(TAG, "saw output EOS");
                     }
 
 
@@ -169,7 +134,7 @@ public class Mp3Decoder {
             }
             callback.onEnd();
         } catch (IOException ex) {
-            AILog.e(TAG, "realPlay exception : " + ex.toString());
+            Log.e(TAG, "realPlay exception : " + ex.toString());
             callback.onError(-1);
         }
     }
