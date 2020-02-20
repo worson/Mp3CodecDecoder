@@ -287,7 +287,7 @@ public class ChannelNativePlayer {
             AILog.i(TAG, String.format("realPlay:channelConfig=%s,sampleRateInHz=%s,bufsize=%s ", channelConfig, sampleRateInHz, bufsize));
             while (mAudioTrack == null && !createOk && (System.currentTimeMillis() - firstTime) < 5000) {
                 //创建AudioTrack
-                mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRateInHz,
+                mAudioTrack = new AudioTrack(6, sampleRateInHz,
                     channelConfig, AudioFormat.ENCODING_PCM_16BIT, bufsize,
                     AudioTrack.MODE_STREAM);//
 //                    mAudioTrack.setStereoVolume(1,0);

@@ -1,2 +1,2 @@
-include ':app'
+include ':app', ':libmp3'
 rootProject.name='Mp3CodecDecoder'
