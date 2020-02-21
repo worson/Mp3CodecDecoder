@@ -1,12 +1,11 @@
 package com.sen.audio.mp3codecdecoder.play;
 
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import com.sen.audio.mp3codecdecoder.utils.AILog;
+import com.lib.common.dlog.DLog;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -108,7 +107,7 @@ public class ChannelNativePlayer {
     }
 
     public void stop(int id) {
-        AILog.i(TAG, "stop: " + id);
+        DLog.i(TAG, "stop: " + id);
         stop(getPlayItem(id));
         checkAudioPlay();
     }
@@ -118,7 +117,7 @@ public class ChannelNativePlayer {
      * 暂时正在播放和缓冲队列数据
      */
     public void stopAll() {
-        AILog.i(TAG, "stopAll: ");
+        DLog.i(TAG, "stopAll: ");
         for (PlayerItem item : mPlayList) {
             stop(item);
         }
@@ -176,19 +175,19 @@ public class ChannelNativePlayer {
     private void checkAudioPlay() {
         //缓冲队列没有待播放音频
         if (mPlayList.size() <= 0) {
-            AILog.i(TAG, "checkAudioPlay: play buffer is null");
+            DLog.i(TAG, "checkAudioPlay: play buffer is null");
             return;
         }
         final PlayerItem firstItem = mPlayList.get(0);
 
         //当前双通道音频在播放
         if (firstItem.channel == CHANNEL_STEREO && firstItem.playStatus == PlayerItem.STATUS_PLAYING) {
-            AILog.i(TAG, "checkAudioPlay: stereo play , busy ...");
+            DLog.i(TAG, "checkAudioPlay: stereo play , busy ...");
             return;
         }
         //当前没有音频在播放
         if (firstItem.playStatus == PlayerItem.STATUS_WAIT_PLAY) {
-            AILog.i(TAG, "checkAudioPlay: not busy , play " + firstItem.filePath);
+            DLog.i(TAG, "checkAudioPlay: not busy , play " + firstItem.filePath);
             firstItem.playStatus = PlayerItem.STATUS_PREPARE_PLAY;
             new Thread(new Runnable() {
                 public void run() {
@@ -206,14 +205,14 @@ public class ChannelNativePlayer {
             for (int i = 1; i < mPlayList.size(); i++) {
                 PlayerItem item = mPlayList.get(i);
                 if (item.channel == CHANNEL_STEREO) {
-                    AILog.i(TAG, "checkAudioPlay: next audio is stereo , cant play");
+                    DLog.i(TAG, "checkAudioPlay: next audio is stereo , cant play");
                     return;
                 }
                 if (item.channel != firstItem.channel && (item.playStatus == PlayerItem.STATUS_PLAYING || item.playStatus == PlayerItem.STATUS_PREPARE_PLAY)) {
-                    AILog.i(TAG, "checkAudioPlay: current channel is busy");
+                    DLog.i(TAG, "checkAudioPlay: current channel is busy");
                     return;
                 } else if (item.channel != firstItem.channel && item.channel != CHANNEL_STEREO && item.playStatus == PlayerItem.STATUS_WAIT_PLAY) {
-                    AILog.i(TAG, "checkAudioPlay: another channel not busy , play " + item.filePath);
+                    DLog.i(TAG, "checkAudioPlay: another channel not busy , play " + item.filePath);
                     final PlayerItem playerItem = item;
                     playerItem.playStatus = PlayerItem.STATUS_PREPARE_PLAY;
                     new Thread(new Runnable() {
@@ -225,7 +224,7 @@ public class ChannelNativePlayer {
 
                     }).start();
                 } else {
-                    AILog.d(TAG, "checkAudioPlay: itme " + item);
+                    DLog.d(TAG, "checkAudioPlay: itme " + item);
                 }
             }
         }
@@ -249,7 +248,7 @@ public class ChannelNativePlayer {
      */
     private void realPlay(final PlayerItem item) {
         final String filePath = item.filePath;
-        AILog.i(TAG, String.format("realPlay: filePath=%s,channel=%s", item.filePath, item.channel));
+        DLog.i(TAG, String.format("realPlay: filePath=%s,channel=%s", item.filePath, item.channel));
         item.playStatus = PlayerItem.STATUS_PLAYING;
         if (item.callback != null) {
             item.callback.onStart();
@@ -260,9 +259,9 @@ public class ChannelNativePlayer {
         try {
             extractor.setDataSource(filePath);
 
-            AILog.d(TAG, String.format("TRACKS #: %d", extractor.getTrackCount()));
+            DLog.d(TAG, String.format("TRACKS #: %d", extractor.getTrackCount()));
             MediaFormat trackFormat = extractor.getTrackFormat(0);
-            AILog.i(TAG, "realPlay: trackFormat "+trackFormat);
+            DLog.i(TAG, "realPlay: trackFormat "+trackFormat);
             String mime = trackFormat.getString(MediaFormat.KEY_MIME);
             extractor.selectTrack(0);
 //            extractor.seekTo(100 * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
@@ -284,7 +283,7 @@ public class ChannelNativePlayer {
             }
             long firstTime = System.currentTimeMillis();
             int createCnt = 0;
-            AILog.i(TAG, String.format("realPlay:channelConfig=%s,sampleRateInHz=%s,bufsize=%s ", channelConfig, sampleRateInHz, bufsize));
+            DLog.i(TAG, String.format("realPlay:channelConfig=%s,sampleRateInHz=%s,bufsize=%s ", channelConfig, sampleRateInHz, bufsize));
             while (mAudioTrack == null && !createOk && (System.currentTimeMillis() - firstTime) < 5000) {
                 //创建AudioTrack
                 mAudioTrack = new AudioTrack(6, sampleRateInHz,
@@ -297,7 +296,7 @@ public class ChannelNativePlayer {
                 if (mAudioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
                     try {
                         createCnt++;
-                        AILog.i(TAG, "realPlay: create AudioTrack error " + createCnt);
+                        DLog.i(TAG, "realPlay: create AudioTrack error " + createCnt);
                         Thread.sleep(100);
                         mAudioTrack = null;
                     } catch (InterruptedException e) {
@@ -316,11 +315,11 @@ public class ChannelNativePlayer {
                         mAudioTrack.setStereoVolume(1, 1);
                     }
                 }
-                AILog.i(TAG, "realPlay: AudioTrack State " + mAudioTrack.getState());
+                DLog.i(TAG, "realPlay: AudioTrack State " + mAudioTrack.getState());
 
             }
             if (mAudioTrack == null || mAudioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
-                AILog.e(TAG, "realPlay: AudioTrack init error");
+                DLog.e(TAG, "realPlay: AudioTrack init error");
                 if (item.callback != null) {
                     item.callback.onError();
                 }
@@ -336,7 +335,7 @@ public class ChannelNativePlayer {
             boolean sawOutputEOS = false;
 
             while (!sawInputEOS && !sawOutputEOS && (item.playStatus != PlayerItem.STATUS_WAIT_STOP)) {
-//                        AILog.d(TAG, "for loop");
+//                        DLog.d(TAG, "for loop");
                 // Read from mp3
                 int inputBufferId = decoder.dequeueInputBuffer(-1);
                 if (inputBufferId >= 0) {
@@ -346,11 +345,11 @@ public class ChannelNativePlayer {
                     long presentationTimeUs = 0;
                     int sampleSize = extractor.readSampleData(inputBuffer, 0);
                     extractor.advance();
-//                            AILog.d(TAG, "read sampleSize:" + sampleSize);
+//                            DLog.d(TAG, "read sampleSize:" + sampleSize);
                     if (sampleSize < 0) {
                         sawInputEOS = true;
                         sampleSize = 0;
-                        AILog.d(TAG, "saw EOF in input");
+                        DLog.d(TAG, "saw EOF in input");
                     } else {
                         presentationTimeUs = extractor.getSampleTime();
                     }
@@ -360,17 +359,17 @@ public class ChannelNativePlayer {
                         presentationTimeUs,
                         sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
                 } else if (inputBufferId == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                    AILog.w(TAG, "INFO_TRY_AGAIN_LATER");
+                    DLog.w(TAG, "INFO_TRY_AGAIN_LATER");
 
                 } else if (inputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    AILog.w(TAG, "INFO_OUTPUT_FORMAT_CHANGED");
+                    DLog.w(TAG, "INFO_OUTPUT_FORMAT_CHANGED");
                     trackFormat = decoder.getOutputFormat();
                 } else {
-                    AILog.w(TAG, "unknown error dequeueInputBuffer");
+                    DLog.w(TAG, "unknown error dequeueInputBuffer");
                 }
 
                 // decode
-//                        AILog.d(TAG, "decoding....");
+//                        DLog.d(TAG, "decoding....");
                 int outputBufferId = decoder.dequeueOutputBuffer(info, -1);
 
                 if (outputBufferId >= 0) {
@@ -385,14 +384,14 @@ public class ChannelNativePlayer {
                     outputBuffer.clear(); // ** MUST DO!!! OTHERWISE THE NEXT TIME YOU GET THIS SAME BUFFER BAD THINGS WILL HAPPEN
 
                     if (chunk.length > 0) {
-//                                AILog.d(TAG, "writing chunk:" + chunk.length);
+//                                DLog.d(TAG, "writing chunk:" + chunk.length);
                         //In streaming mode, the write will normally block until all the data has been enqueued
                         mAudioTrack.write(chunk, 0, chunk.length);
                     }
                     decoder.releaseOutputBuffer(outputBufferId, false /* render */);
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         sawOutputEOS = true;
-                        AILog.d(TAG, "saw output EOS");
+                        DLog.d(TAG, "saw output EOS");
                     }
 
 
@@ -403,7 +402,7 @@ public class ChannelNativePlayer {
                 }
             }
             item.playStatus = PlayerItem.STATUS_DEAED;
-            AILog.d(TAG, "done foe loop");
+            DLog.d(TAG, "done foe loop");
             if (item.channel == CHANNEL_LEFT) {
                 if (mLeftAudioTrack == null) {
                     decoder.stop();
@@ -420,7 +419,7 @@ public class ChannelNativePlayer {
                 item.callback.onEnd();
             }
         } catch (IOException ex) {
-            AILog.e(TAG, "realPlay exception : " + ex.toString());
+            DLog.e(TAG, "realPlay exception : " + ex.toString());
             item.playStatus = PlayerItem.STATUS_DEAED;
             if (item.callback != null) {
                 item.callback.onError();

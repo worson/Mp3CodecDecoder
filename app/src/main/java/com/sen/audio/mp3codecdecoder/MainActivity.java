@@ -9,14 +9,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.lib.audio.mp3.codec.Mp3DecodeListener;
 import com.lib.audio.mp3.codec.system.AsynMp3SystemDecoder;
 import com.lib.audio.mp3.util.Mp3Util;
+import com.lib.audio.wav.PcmUtil;
+import com.lib.common.androidbase.global.GlobalContext;
+import com.lib.common.androidbase.resource.AssetsUtil;
+import com.lib.common.androidbase.task.HandlerUtil;
+import com.lib.common.dlog.DLog;
 import com.sen.audio.mp3codecdecoder.play.ChannelNativePlayer;
 import com.sen.audio.mp3codecdecoder.play.IPlayerCallback;
 import com.sen.audio.mp3codecdecoder.play.NativePlayer;
-import com.sen.audio.mp3codecdecoder.utils.AILog;
-import com.sen.audio.mp3codecdecoder.utils.AssetsUtil;
-import com.sen.audio.mp3codecdecoder.utils.AudioUtil;
-import com.sen.audio.mp3codecdecoder.utils.GlobalContext;
-import com.sen.audio.mp3codecdecoder.utils.HandlerUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
                 mLastPlayId=ChannelNativePlayer.getInstance().playLeft(new File(mMp3FilePath), new IPlayerCallback() {
                     @Override
                     public void onStart() {
-                        AILog.i(TAG, "onStart: ");
+                        DLog.i(TAG, "onStart: ");
                     }
 
                     @Override
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onEnd() {
-                        AILog.i(TAG, "onEnd: ");
+                        DLog.i(TAG, "onEnd: ");
                     }
 
                     @Override
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 bt_mp3_to_wav.setEnabled(false);
                 long rtc=System.currentTimeMillis();
                 Mp3Util.decode2wav(mMp3FilePath,mWavFilePath);
-                AILog.i(TAG, "onClick: decode cost "+(System.currentTimeMillis()-rtc));
+                DLog.i(TAG, "onClick: decode cost "+(System.currentTimeMillis()-rtc));
                 bt_mp3_to_wav.setEnabled(true);
             }
         });
@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStart(int simpleRate, int channel) {
-                AILog.i(TAG, String.format("onStart: simpleRate=%s,channel=%s",simpleRate,channel));
+                DLog.i(TAG, String.format("onStart: simpleRate=%s,channel=%s",simpleRate,channel));
                 mSimpleRate=simpleRate;
                 mChannel=channel;
                 try {
@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onEnd() {
-                AILog.i(TAG, "onEnd: ");
+                DLog.i(TAG, "onEnd: ");
                 try {
                     mOutputStream.flush();
                     mOutputStream.close();
@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                AudioUtil.convertWaveFile(mChannel,mSimpleRate,mTempPcmPath,mWavFilePath);
+                PcmUtil.toWav(mTempPcmPath,mWavFilePath);
 
                 HandlerUtil.postInMainThread(new Runnable() {
                     @Override
@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onData(byte[] data, int len) {
-//                        AILog.i(TAG, "onData: "+len);
+//                        DLog.i(TAG, "onData: "+len);
                 try {
                     mOutputStream.write(data,0,len);
                 } catch (IOException e) {
@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(int code) {
-                AILog.i(TAG, "onError: "+code);
+                DLog.i(TAG, "onError: "+code);
                 try {
                     mOutputStream.flush();
                     mOutputStream.close();
@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-        AILog.i(TAG, "onClick: start decode");
+        DLog.i(TAG, "onClick: start decode");
         mp3Decoder.start();
     }
 

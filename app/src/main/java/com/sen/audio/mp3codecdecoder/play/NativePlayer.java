@@ -10,9 +10,9 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.RequiresApi;
-import com.sen.audio.mp3codecdecoder.utils.AILog;
-import com.sen.audio.mp3codecdecoder.utils.GlobalContext;
-import com.sen.audio.mp3codecdecoder.utils.HandlerUtil;
+import com.lib.common.androidbase.global.GlobalContext;
+import com.lib.common.androidbase.task.HandlerUtil;
+import com.lib.common.dlog.DLog;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
@@ -62,7 +62,7 @@ public class NativePlayer {
     }
 
     private void releasePlayer() {
-        AILog.i("NativePlayer", "release player");
+        DLog.i("NativePlayer", "release player");
         this.mCurrentTask = null;
         this.mCurrentId = -1;
         if (null != this.mPlayer) {
@@ -73,19 +73,19 @@ public class NativePlayer {
     }
 
     private void poll() {
-        AILog.i("NativePlayer", "poll task");
+        DLog.i("NativePlayer", "poll task");
         if (null != this.mCurrentTask) {
-            AILog.i("NativePlayer", "current task isn't null!!!");
+            DLog.i("NativePlayer", "current task isn't null!!!");
         } else {
             final PlayerTask playerTask = (PlayerTask) this.mTaskQueue.poll();
             if (null == playerTask) {
                 this.releasePlayer();
                 this.mCurrentId = -1;
-                AILog.i("NativePlayer", "empty queue!!!");
+                DLog.i("NativePlayer", "empty queue!!!");
             } else {
                 this.mCurrentTask = playerTask;
                 this.mCurrentId = playerTask.getId();
-                AILog.d("NativePlayer", playerTask);
+                DLog.d("NativePlayer", playerTask);
                 this.mPlayer = this.getPlayer();
                 this.mPlayer.reset();
                 if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -122,7 +122,7 @@ public class NativePlayer {
 
                 this.mPlayer.setOnPreparedListener(new OnPreparedListener() {
                     public void onPrepared(MediaPlayer mediaPlayer) {
-                        AILog.d("NativePlayer", "prepared " + NativePlayer.this.mCurrentId);
+                        DLog.d("NativePlayer", "prepared " + NativePlayer.this.mCurrentId);
                         NativePlayer.this.mPlayer.start();
                         if (null != playerTask.getCallback()) {
                             playerTask.getCallback().onStart();
@@ -132,7 +132,7 @@ public class NativePlayer {
                 });
                 this.mPlayer.setOnErrorListener(new OnErrorListener() {
                     public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-                        AILog.d("NativePlayer", "error:" + NativePlayer.this.mCurrentId + " " + i + " " + i1);
+                        DLog.d("NativePlayer", "error:" + NativePlayer.this.mCurrentId + " " + i + " " + i1);
                         if (null != playerTask.getCallback()) {
                             playerTask.getCallback().onError();
                             playerTask.getCallback().onEnd();
@@ -146,7 +146,7 @@ public class NativePlayer {
                 });
                 this.mPlayer.setOnCompletionListener(new OnCompletionListener() {
                     public void onCompletion(MediaPlayer mediaPlayer) {
-                        AILog.d("NativePlayer", "completion " + NativePlayer.this.mCurrentId);
+                        DLog.d("NativePlayer", "completion " + NativePlayer.this.mCurrentId);
                         if (null != playerTask.getCallback()) {
                             playerTask.getCallback().onSuccess();
                             playerTask.getCallback().onEnd();
@@ -164,7 +164,7 @@ public class NativePlayer {
 
     public int play(File file, IPlayerCallback callback) {
         int nextId = NativePlayer.IdUtil.getNextId();
-        AILog.i("NativePlayer", "create player task:" + nextId);
+        DLog.i("NativePlayer", "create player task:" + nextId);
         PlayerTask playerTask = new PlayerTask(0, nextId, callback);
         playerTask.setFile(file);
         this.mTaskQueue.add(playerTask);
@@ -174,7 +174,7 @@ public class NativePlayer {
 
     public int play(AssetFileDescriptor fileDescriptor, IPlayerCallback callback) {
         int nextId = NativePlayer.IdUtil.getNextId();
-        AILog.i("NativePlayer", "create player task:" + nextId);
+        DLog.i("NativePlayer", "create player task:" + nextId);
         PlayerTask playerTask = new PlayerTask(1, nextId, callback);
         playerTask.setAssetFileDescriptor(fileDescriptor);
         this.mTaskQueue.add(playerTask);
@@ -184,7 +184,7 @@ public class NativePlayer {
 
     public int play(Uri uri, IPlayerCallback callback) {
         int nextId = NativePlayer.IdUtil.getNextId();
-        AILog.i("NativePlayer", "create player task:" + nextId);
+        DLog.i("NativePlayer", "create player task:" + nextId);
         PlayerTask playerTask = new PlayerTask(2, nextId, callback);
         playerTask.setUri(uri);
         this.mTaskQueue.add(playerTask);
@@ -193,7 +193,7 @@ public class NativePlayer {
     }
 
     public void cancel(final int id) {
-        AILog.i("NativePlayer", "cancel :" + id);
+        DLog.i("NativePlayer", "cancel :" + id);
         if (id != -1) {
             HandlerUtil.postInMainThread(new Runnable() {
                 @RequiresApi(
